@@ -2930,7 +2930,7 @@ class CameraTots
             if (VideoPreview)
             {
                 videorender.setupPortFromCamera(portDef);
-                videorender.SetDestRect(0, 0, 640, 480);
+                videorender.SetDestRect(40, 48, 640, 480); // G8GKQ Edit
             }
             portDef->format.video.nFrameWidth = vfResized.width;
             portDef->format.video.nFrameHeight = vfResized.height;
