@@ -1,6 +1,8 @@
 # avc2ts
 Tailored Copy of F5OEO's avc2ts for use in Portsdown Transmitter
+
 Thanks to Evariste for the original code here: https://github.com/F5OEO/avc2ts
+```
 
 Usage:
 avc2ts  -o OutputFile -b BitrateVideo -m BitrateMux -x VideoWidth  -y VideoHeight -f Framerate -n MulticastGroup [-d PTS/PCR][-v][-h] 
@@ -23,3 +25,5 @@ avc2ts  -o OutputFile -b BitrateVideo -m BitrateMux -x VideoWidth  -y VideoHeigh
 -s 		Set Servicename : Typically CALL
 -h    help (print this help).
 Example : ./avc2ts -o result.ts -b 1000000 -m 1400000 -x 640 -y 480 -f 25 -n 230.0.0.1:1000
+
+```
