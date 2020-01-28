@@ -2361,7 +2361,7 @@ class TSEncaspulator
         program[0].sdt = (sdt_program_ctx_t){
             .service_type = DVB_SERVICE_TYPE_DIGITAL_TELEVISION,
             .service_name = sdt,
-            .provider_name = sdt,
+            .provider_name = "Portsdown",
         };
 
         ts_stream[0].pid = VideoPid;
