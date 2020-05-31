@@ -253,14 +253,14 @@ extern "C"
                                  u, u_stride,
                                  crop_width, inv_crop_height, rotation);
             break;
-        case FOURCC_M420:
-            src = sample + (src_width * crop_y) * 12 / 8 + crop_x;
-            r = M420ToI420(src, src_width,
-                           y, y_stride,
-                           u, u_stride,
-                           v, v_stride,
-                           crop_width, inv_crop_height);
-            break;
+//        case FOURCC_M420:    // No longer supported by libyuv
+//            src = sample + (src_width * crop_y) * 12 / 8 + crop_x;
+//            r = M420ToI420(src, src_width,
+//                           y, y_stride,
+//                           u, u_stride,
+//                           v, v_stride,
+//                           crop_width, inv_crop_height);
+//            break;
         // Triplanar formats
         case FOURCC_I420:
         case FOURCC_YV12:
