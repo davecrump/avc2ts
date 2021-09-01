@@ -1013,6 +1013,8 @@ class Camera : public Component
 
     static const unsigned CAM_DEVICE_NUMBER = 0;
 
+    //int RotatePiCam = 0;
+
     static int32_t align(unsigned x, unsigned y)
     {
         return (x + y - 1) & (~(y - 1));
@@ -1089,7 +1091,7 @@ class Camera : public Component
         getSensorModes(OPORT_VIDEO);
     }
 
-    void setVideoFromat(const VideoFromat &videoFormat, bool VideoPreview = false)
+    void setVideoFromat(const VideoFromat &videoFormat, bool VideoPreview = false, int RotatePiCam = 0)
     {
         Parameter<OMX_PARAM_PORTDEFINITIONTYPE> portDef;
         getPortDefinition(OPORT_VIDEO, portDef);
@@ -1111,6 +1113,10 @@ class Camera : public Component
             portDef->format.video.nStride = align(portDef->format.video.nFrameWidth, 16);
             portDef->format.video.eColorFormat = OMX_COLOR_FormatYUV420PackedPlanar;
             setPortDefinition(OPORT_PREVIEW, portDef);
+            if (RotatePiCam == 1)    // davecrump edit
+            {
+              setMirror(OPORT_PREVIEW, OMX_MirrorBoth);
+            }
         }
         //setFramerate(videoFormat.framerate);
     }
@@ -1225,7 +1231,7 @@ class Camera : public Component
         ERR_OMX(OMX_SetConfig(component_, OMX_IndexConfigSmartShakeReductionEnable, &Reduction), "set Shake reduction");
     }
 
-    void setImageDefaults()
+    void setImageDefaults(int RotatePiCam = 0)
     {
         setSharpness();
         setContrast();
@@ -1236,6 +1242,10 @@ class Camera : public Component
         setWhiteBalanceControl();
         setImageFilter();
         setSmartShakeReduction();
+        if (RotatePiCam == 1)                  // davecrump edit
+        {
+          setMirror(OPORT_VIDEO,OMX_MirrorBoth);
+        }
         //setMirror(OPORT_VIDEO,OMX_MirrorVertical);
     }
 
@@ -2264,6 +2274,7 @@ static OMX_ERRORTYPE callback_FillBufferDone(OMX_HANDLETYPE hComponent, OMX_PTR 
 // Global variable used by the signal handler and capture/encoding loop
 static int want_quit = 0;
 
+
 #if 1
 // Global signal handler for trapping SIGINT, SIGTERM, and SIGQUIT
 static void signal_handler(int signal)
@@ -2361,7 +2372,7 @@ class TSEncaspulator
         program[0].sdt = (sdt_program_ctx_t){
             .service_type = DVB_SERVICE_TYPE_DIGITAL_TELEVISION,
             .service_name = sdt,
-            .provider_name = "Portsdown",
+            .provider_name = "Portsdown 4",
         };
 
         ts_stream[0].pid = VideoPid;
@@ -3061,7 +3072,7 @@ class CameraTots
     bool TxAudio=false;
 
   public:
-    void Init(VideoFromat &VideoFormat, char *FileName, char *Udp, int VideoBitrate, int TsBitrate, int SetDelayPts, int PMTPid, char *sdt, int fps = 25, int IDRPeriod = 100, int RowBySlice = 0, int EnableMotionVectors = 0,char *audiofilename=NULL,size_t audiobitrate=32000)
+    void Init(VideoFromat &VideoFormat, char *FileName, char *Udp, int VideoBitrate, int TsBitrate, int SetDelayPts, int PMTPid, char *sdt, int fps = 25, int IDRPeriod = 100, int RowBySlice = 0, int EnableMotionVectors = 0,char *audiofilename=NULL,size_t audiobitrate=32000, int RotatePiCam=0)  // davecrump edit
     {
         TxAudio=(audiofilename!=NULL);
         if(TxAudio)
@@ -3075,9 +3086,9 @@ class CameraTots
         DelayPTS = SetDelayPts;
         // configuring camera
         Videofps = fps;
-        camera.setVideoFromat(VideoFormat, VideoPreview);
+        camera.setVideoFromat(VideoFormat, VideoPreview, RotatePiCam);  // davecrump edit
 
-        camera.setImageDefaults();
+        camera.setImageDefaults(RotatePiCam);  // davecrump edit
         camera.getSensorModes();
         camera.getSensorCameraMode();
         camera.setImageFilter(OMX_ALL, OMX_ImageFilterNoise);
@@ -3098,8 +3109,15 @@ class CameraTots
             if (VideoPreview)
             {
                 videorender.setupPortFromCamera(portDef);
-                videorender.SetDestRect(40, 0, 640, 480); //davecrump edit
-            }
+                if (CurrentVideoFormat.width > 768)  // 16:9
+                {
+                    videorender.SetDestRect(0, 0, 800, 480); //davecrump edit
+                }
+                else
+                {
+                    videorender.SetDestRect(80, 0, 640, 480); //davecrump edit
+                }
+             }
             portDef->format.video.nFrameWidth = vfResized.width;
             portDef->format.video.nFrameHeight = vfResized.height;
             /*	 if(VideoBitrate<150000)
@@ -3646,7 +3664,8 @@ class PictureTots
     {
         unsigned int i, j;
         frame = frame % 256;
-        OMX_U8 *y = buf, *u = y + CurrentVideoFormat.width * CurrentVideoFormat.height, *v = u + (CurrentVideoFormat.width >> 1) * (CurrentVideoFormat.height >> 1);
+        // OMX_U8 *y = buf, *u = y + CurrentVideoFormat.width * CurrentVideoFormat.height, *v = u + (CurrentVideoFormat.width >> 1) * (CurrentVideoFormat.height >> 1);
+        OMX_U8 *y = buf, *u = y + CurrentVideoFormat.width * CurrentVideoFormat.height;
         memset(u, 0x80, (CurrentVideoFormat.width >> 1) * (CurrentVideoFormat.height));
         for (j = 0; j < CurrentVideoFormat.height; j++)
         {
@@ -4021,6 +4040,7 @@ Usage:\nrpi-avc2ts  -o OutputFile -b BitrateVideo -m BitrateMux -x VideoWidth  -
 -e 		Extra Arg:\n\
 			- For usb camera name of device (/dev/video0)\n\
 			- For VNC : IP address of VNC Server. Password must be datv\n\
+-u      Optional invert Pi Cam image\n\
 -p 		Set the PidStart: Set PMT=PIDStart,Pidvideo=PidStart+1,PidAudio=PidStart+2\n\
 -s 		Set Servicename : Typically CALL\n\
 -a 		Raw PCM audio(48Khz stereo) Filename\n\
@@ -4053,6 +4073,7 @@ int main(int argc, char **argv)
     char *audiofile = NULL;
     int pidpmt = 255;//, pidvideo = 256, pidaudio = 257;
     size_t audiobitrate=32000;
+    int RotatePiCam = 0;
 
 #define CAMERA 0
 #define PATTERN 1
@@ -4065,7 +4086,7 @@ int main(int argc, char **argv)
 
     while (1)
     {
-        a = getopt(argc, argv, "o:b:m:hx:y:f:n:d:i:r:vt:e:p:s:a:z:");
+        a = getopt(argc, argv, "o:b:m:hx:y:f:n:d:i:r:vut:e:p:s:a:z:");
 
         if (a == -1)
         {
@@ -4115,6 +4136,9 @@ int main(int argc, char **argv)
             break;
         case 'v': // Motion Vectors
             EnableMotionVectors = 1;
+            break;
+        case 'u': // Rotate PiCam image by 180 degrees
+            RotatePiCam = 1;
             break;
         case 'r': // Rows by slice
             RowBySlice = atoi(optarg);
@@ -4202,9 +4226,9 @@ else
             int PictureMode = PictureTots::Mode_PATTERN;
             switch (TypeInput)
             {
-                case 0:
+                case 0:  // Pi Camera
                 cameratots = new CameraTots;
-                cameratots->Init(CurrentVideoFormat, OutputFileName, NetworkOutput, VideoBitrate, MuxBitrate, DelayPTS, pidpmt, sdt, VideoFramerate, IDRPeriod, RowBySlice, EnableMotionVectors,audiofile,audiobitrate);
+                cameratots->Init(CurrentVideoFormat, OutputFileName, NetworkOutput, VideoBitrate, MuxBitrate, DelayPTS, pidpmt, sdt, VideoFramerate, IDRPeriod, RowBySlice, EnableMotionVectors,audiofile,audiobitrate,RotatePiCam);
                 break;
             case PATTERN:
                 PictureMode = PictureTots::Mode_PATTERN;
