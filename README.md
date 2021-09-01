@@ -1,5 +1,5 @@
 # avc2ts
-Tailored Copy of F5OEO's avc2ts for use in Portsdown Transmitter
+Tailored Copy of F5OEO's avc2ts for use in Portsdown 4 Transmitter with 7 inch touchscreen
 
 Thanks to Evariste for the original code here: https://github.com/F5OEO/avc2ts
 ```
@@ -21,6 +21,7 @@ avc2ts  -o OutputFile -b BitrateVideo -m BitrateMux -x VideoWidth  -y VideoHeigh
       - For usb camera name of device (/dev/video0)
       - For VNC : IP address of VNC Server. Password must be datv
       - For ffmpeg : url or file to stream
+-u    Optional invert Pi Cam image
 -p    Set the PidStart: Set PMT=PIDStart,Pidvideo=PidStart+1,PidAudio=PidStart+2
 -s    Set Servicename : Typically CALL
 -h    help (print this help).
